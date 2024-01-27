@@ -61,7 +61,8 @@
 
 
 int
-main (int argc, char *argv[])
+bison_main (int argc, char *argv[])
+// main (int argc, char *argv[])
 {
   {
     char *cp = getenv ("BISON_PROGRAM_NAME");
