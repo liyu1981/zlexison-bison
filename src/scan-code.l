@@ -24,6 +24,7 @@
 #include <c-ctype.h>
 #include <get-errno.h>
 #include <quote.h>
+#include <ctype.h>
 
 #include "src/complain.h"
 #include "src/getargs.h"
@@ -403,6 +404,8 @@ show_sub_messages (warnings warning,
    points to LHS ($$) of the current rule or midrule. */
 #define LHS_REF (INT_MIN + 1)
 
+#define ZIG_BUILTIN_REF (INT_MIN + 2)
+
 /* Parse a positional reference in RULE.  */
 static long
 parse_positional_ref (char *cp, int rule_length,
@@ -501,33 +504,38 @@ parse_ref (char *cp, symbol_list *rule, int rule_length,
         int len = (explicit_bracketing || !ref_tail_fields) ?
           cp_end - cp : ref_tail_fields - cp;
 
-        complain (text_loc, complaint,
-                  _("invalid reference: %s"), quote (text));
-        if (len == 0)
-          {
-            location sym_loc = *text_loc;
-            sym_loc.start.column += 1;
-            sym_loc.end = sym_loc.start;
-            subcomplain (&sym_loc, complaint,
-                         _("syntax error after '%c', expecting integer, "
-                         "letter, '_', '[', or '$'"),
-                         dollar_or_at);
-          }
-        else if (midrule_rhs_index)
-          subcomplain (&rule->rhs_loc, complaint,
-                       _("symbol not found in production before $%d: "
-                       "%.*s"),
-                       midrule_rhs_index, len, cp);
-        else
-          subcomplain (&rule->rhs_loc, complaint,
-                       _("symbol not found in production: %.*s"),
-                       len, cp);
+        if (text[0] == '@' && isalpha(text[1])) {
+          return ZIG_BUILTIN_REF;
+        } else {
+          complain (text_loc, complaint,
+                    _("invalid reference: %s"), quote (text));
+          if (len == 0)
+            {
+              location sym_loc = *text_loc;
+              sym_loc.start.column += 1;
+              sym_loc.end = sym_loc.start;
+              subcomplain (&sym_loc, complaint,
+                          _("syntax error after '%c', expecting integer, "
+                          "letter, '_', '[', or '$'"),
+                          dollar_or_at);
+            }
+          else if (midrule_rhs_index)
+            subcomplain (&rule->rhs_loc, complaint,
+                        _("symbol not found in production before $%d: "
+                        "%.*s"),
+                        midrule_rhs_index, len, cp);
+          else
+            subcomplain (&rule->rhs_loc, complaint,
+                        _("symbol not found in production: %.*s"),
+                        len, cp);
 
-        if (variant_count > 0)
-          show_sub_messages (complaint,
-                             cp, explicit_bracketing, midrule_rhs_index,
-                             dollar_or_at);
-        return INVALID_REF;
+          if (variant_count > 0) {
+            show_sub_messages (complaint,
+                              cp, explicit_bracketing, midrule_rhs_index,
+                              dollar_or_at);
+          }
+          return INVALID_REF;
+        }
       }
     case 1:
       {
@@ -731,8 +739,13 @@ handle_action_at (symbol_list *rule, char *text, const location *at_loc)
 
   int n = parse_ref (text + 1, effective_rule, effective_rule_length,
                      rule->midrule_parent_rhs_index, text, at_loc, '@');
+  // fprintf(stderr, "parse_ref return: %d, %d, %s, %s\n", n, INVALID_REF, text, text + 1);
   switch (n)
     {
+    case ZIG_BUILTIN_REF:
+      obstack_printf (&obstack_for_string, "]b4_zig_builtin_%s[", text + 1);
+      break;
+
     case INVALID_REF:
       break;
 
@@ -761,6 +774,7 @@ translate_action (code_props *self, int sc_context)
   loc->start = loc->end = self->location.start;
   yy_switch_to_buffer (yy_scan_string (self->code));
   char *res = code_lex (self, sc_context);
+  // fprintf(stderr, "translated: %s\n", res);
   yy_delete_buffer (YY_CURRENT_BUFFER);
   return res;
 }
