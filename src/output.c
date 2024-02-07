@@ -731,6 +731,10 @@ output_skeleton (void)
                 ? xstrdup (skeleton)
                 : xpath_join (skeldir, skeleton));
 
+  char zison_version_buf[64];
+  memset(zison_version_buf, 0, 64);
+  sprintf(zison_version_buf, "--define=z4_zison_version=%s", getenv("ZISON_VERSION"));
+
   /* Test whether m4sugar.m4 is readable, to check for proper
      installation.  A faulty installation can cause deadlock, so a
      cheap sanity check is worthwhile.  */
@@ -741,7 +745,7 @@ output_skeleton (void)
   int filter_fd[2];
   pid_t pid;
   {
-    char const *argv[11];
+    char const *argv[12];
     int i = 0;
     argv[i++] = m4;
 
@@ -759,6 +763,9 @@ output_skeleton (void)
 
     argv[i++] = "-I";
     argv[i++] = datadir;
+
+    argv[i++] = zison_version_buf;
+
     /* Some future version of GNU M4 (most likely 1.6) may treat the
        -dV in a position-dependent manner.  See the thread starting at
        <https://lists.gnu.org/r/bug-bison/2008-07/msg00000.html>
