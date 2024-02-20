@@ -735,6 +735,14 @@ output_skeleton (void)
   memset(zison_version_buf, 0, 64);
   sprintf(zison_version_buf, "--define=z4_zison_version=%s", getenv("ZISON_VERSION"));
 
+  char zison_need_main_buf[64];
+  memset(zison_need_main_buf, 0, 64);
+  int need_main = 0;
+  if (getenv("ZISON_NEED_MAIN") != NULL) {
+    sprintf(zison_need_main_buf, "--define=z4_need_main=1");
+    need_main = 1;
+  }
+
   /* Test whether m4sugar.m4 is readable, to check for proper
      installation.  A faulty installation can cause deadlock, so a
      cheap sanity check is worthwhile.  */
@@ -745,7 +753,7 @@ output_skeleton (void)
   int filter_fd[2];
   pid_t pid;
   {
-    char const *argv[12];
+    char const *argv[13];
     int i = 0;
     argv[i++] = m4;
 
@@ -765,6 +773,12 @@ output_skeleton (void)
     argv[i++] = datadir;
 
     argv[i++] = zison_version_buf;
+
+    if (need_main) {
+      argv[i++] = zison_need_main_buf;
+    } else {
+      argv[i++] = "";
+    }
 
     /* Some future version of GNU M4 (most likely 1.6) may treat the
        -dV in a position-dependent manner.  See the thread starting at
