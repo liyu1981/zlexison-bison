@@ -735,11 +735,8 @@ output_skeleton (void)
   memset(zison_version_buf, 0, 64);
   sprintf(zison_version_buf, "--define=z4_zison_version=%s", getenv("ZISON_VERSION"));
 
-  char zison_need_main_buf[64];
-  memset(zison_need_main_buf, 0, 64);
   int need_main = 0;
   if (getenv("ZISON_NEED_MAIN") != NULL) {
-    sprintf(zison_need_main_buf, "--define=z4_need_main=1");
     need_main = 1;
   }
 
@@ -775,9 +772,9 @@ output_skeleton (void)
     argv[i++] = zison_version_buf;
 
     if (need_main) {
-      argv[i++] = zison_need_main_buf;
+      argv[i++] = "--define=z4_need_main=1";
     } else {
-      argv[i++] = "";
+      argv[i++] = "--define=z4_no_need_main=1";
     }
 
     /* Some future version of GNU M4 (most likely 1.6) may treat the
