@@ -1,11 +1,5 @@
-/*.o
-/*.tmp
-/.deps
-/calc.h
-/mfcalc
-/mfcalc.c
-/mfcalc.exe
-/mfcalc.h
-/mfcalc.output
-/mfcalc.stamp
-/mfcalc.y
+a.out
+mfcalc.tab.c
+calc.h
+mfcalc.output
+mfcalc.y
